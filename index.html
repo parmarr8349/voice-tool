@@ -1,195 +1,170 @@
-<!DOCTYPE html>
 <html lang="hi">
 <head>
-<meta charset="UTF-8">
-<title>Story Visual Player</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body{
-  margin:0;
-  background:#000;
-  color:#fff;
-  font-family: system-ui, sans-serif;
-}
-#container{
-  max-width:600px;
-  margin:auto;
-  padding:10px;
-}
-#visualBox{
-  position:relative;
-  width:100%;
-  height:320px;
-  background:#111;
-  border-radius:14px;
-  overflow:hidden;
-}
-#visualBox img,
-#visualBox video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:none;
-}
-#caption{
-  margin-top:12px;
-  font-size:20px;
-  text-align:center;
-  line-height:1.4;
-}
-textarea{
-  width:100%;
-  height:160px;
-  margin-top:10px;
-  border-radius:10px;
-  padding:10px;
-  font-size:16px;
-}
-button{
-  width:100%;
-  margin-top:10px;
-  padding:12px;
-  font-size:18px;
-  border:none;
-  border-radius:10px;
-  background:#ff0055;
-  color:#fff;
-}
-select{
-  width:100%;
-  margin-top:8px;
-  padding:10px;
-  border-radius:10px;
-  font-size:16px;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>🎬 Ultimate Cinematic Voice + Media Tool</title>
+  <style>
+    body {
+      margin:0; padding:0;
+      font-family:'Segoe UI',sans-serif;
+      background:#000;
+      overflow-x:hidden;
+    }
+    .voice-visual-tool{
+      max-width:1280px; margin:auto;
+      background:rgba(0,0,0,0.8); padding:20px;
+      border-radius:20px; box-shadow:0 0 30px rgba(0,0,0,0.8);
+      color:#fff;
+    }
+    textarea{
+      width:100%; height:180px; font-size:16px; padding:10px; margin-bottom:10px;
+      border-radius:10px; border:1px solid #444; resize:none; background:#111; color:#fff;
+    }
+    button,select{
+      padding:12px 24px; font-size:16px; background:#ff4d4f; color:white; border:none; border-radius:6px;
+      cursor:pointer; margin-right:10px;
+    }
+    .voice-visual-preview{
+      margin-top:30px; aspect-ratio:16/9; width:100%;
+      background:#000; display:flex; align-items:center; justify-content:center;
+      font-size:2.5vw; font-weight:700; border-radius:20px; overflow:hidden;
+      background-size:cover; background-position:center; padding:2vw; text-shadow:2px 2px 12px #000;
+      color:#fff; position:relative;
+    }
+    .avatar-container{flex:0 0 auto;width:160px; visibility:hidden;}
+    .avatar-container img{width:100%;height:auto;}
+    .text-container{
+      flex:1; display:flex; justify-content:center; align-items:center; flex-wrap:wrap;
+      z-index:2; text-align:center; font-weight:700; line-height:1.2;
+    }
+    .voice-caption-container{display:flex; flex-wrap:wrap; gap:8px; justify-content:center;}
+    .voice-caption-word{display:inline-block; opacity:0; animation:fadeIn 0.5s forwards; white-space:nowrap; position:relative;}
+    .voice-caption-word.big{font-size:1.6em;color:#ffeb3b;}
+    .voice-caption-word.emoji{font-size:3em; vertical-align:middle;}
+    .scroll-caption-strip{
+      position:absolute; bottom:0; left:0; right:0;
+      background:linear-gradient(90deg,#ff4d4f,#ffd700,#ff4d4f);
+      color:black; font-size:2vw; white-space:nowrap; overflow:hidden;
+      height:3em; line-height:3em; z-index:3;
+    }
+    .scroll-caption-strip span{display:inline-block;padding-left:100%; animation:scroll-strip 15s linear infinite;}
+    @keyframes scroll-strip{0%{transform:translateX(0);} 100%{transform:translateX(-100%);}}
+    @keyframes fadeIn{from{transform:translateY(15px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+    .media-layer{
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; opacity:0; transition:opacity 1.5s ease, transform 12s linear; z-index:0;
+    }
+    .media-layer.show{opacity:1; transform:scale(1.1);}
+    .type-sound{display:none;}
+    @media(max-width:768px){.voice-visual-preview{font-size:4vw;}}
+  </style>
 </head>
-
 <body>
-<div id="container">
+  <div class="voice-visual-tool">
+    <h2>🎬 Ultimate Cinematic Voice + Media Tool</h2>
+    <textarea id="scriptInput" placeholder="Paste your full script here..."></textarea><br>
+    <label>Language:</label>
+    <select id="voiceLang">
+      <option value="en-US">English</option>
+      <option value="hi-IN">Hindi</option>
+    </select>
+    <label>Speed:</label>
+    <select id="voiceSpeed">
+      <option value="0.8">Slow</option>
+      <option selected value="1">Normal</option>
+      <option value="1.2">Fast</option>
+      <option value="1.5">Faster</option>
+    </select>
+    <button onclick="startPlayback()">▶️ Play</button>
 
-<div id="visualBox">
-  <img id="visualImg">
-  <video id="visualVideo" autoplay muted loop playsinline></video>
-</div>
-
-<div id="caption">Script play karne ke liye Play dabaye</div>
-
-<select id="mode">
-  <option value="long">Long Video</option>
-  <option value="short">Short Video</option>
-</select>
-
-<textarea id="scriptInput">
-1️⃣ एक छोटे से गाँव में रामू नाम का एक गरीब लड़का रहता था 🏡
-2️⃣ वह बहुत मेहनती था 💪
-3️⃣ एक दिन उसकी किस्मत बदलने वाली थी ✨
-</textarea>
-
-<button onclick="startPlay()">▶ Play</button>
-
-</div>
+    <div class="voice-visual-preview" id="preview">
+      <div class="avatar-container">
+        <img src="https://i.ibb.co/cSMndFgK/1000000918-unscreen.gif"/>
+      </div>
+      <div class="text-container" id="textOutput"></div>
+      <div class="scroll-caption-strip"><span id="captionScroll">LIKE • SHARE • SUBSCRIBE</span></div>
+      <img id="mediaImg" class="media-layer">
+      <video id="mediaVid" class="media-layer" muted loop></video>
+    </div>
+    <audio id="typeSound" preload="auto" src="https://files.catbox.moe/8yzjgp.mp3" class="type-sound"></audio>
+    <audio id="bgMusic" loop preload="auto" src="https://files.catbox.moe/f8xqq8.mp3"></audio>
+  </div>
 
 <script>
-const PIXABAY_KEY = "54255969-e91e54d4235ef4c9b25009a63";
-let lines = [];
-let index = 0;
-let wakeLock = null;
-let lastKeyword = "";
+const PIXABAY_KEY="54255969-e91e54d4235ef4c9b25009a63";
+let chunks=[], currentIndex=0, speed=1, lang='en-US', wakeLock=null;
 
-function cleanForVoice(text){
-  return text.replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/gu,"");
+async function requestWakeLock(){try{if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen');}catch(e){console.error(e);}}
+
+function splitScript(script){return script.split(/\n+/).map(l=>l.trim()).filter(Boolean);}
+function cleanText(text){return text.replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/gu,'');}
+
+function keyword(line){
+  let k=cleanText(line).split(" ").slice(0,3).join(" ");
+  if(k.length<3) k=["cinematic","nature","people","city","technology"][Math.floor(Math.random()*5)];
+  return k;
 }
 
-function extractKeyword(line){
-  return line
-    .replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/gu,"")
-    .replace(/[0-9️⃣]/g,"")
-    .split(/\s+/)
-    .find(w => w.length > 2) || "";
+async function fetchMedia(q){
+  // video first
+  let vr=await fetch(`https://pixabay.com/api/videos/?key=${PIXABAY_KEY}&q=${encodeURIComponent(q)}`);
+  let vj=await vr.json();
+  if(vj.hits?.length) return {type:"video",src:vj.hits[0].videos.medium.url};
+
+  // image fallback
+  let ir=await fetch(`https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(q)}&image_type=photo`);
+  let ij=await ir.json();
+  if(ij.hits?.length) return {type:"image",src:ij.hits[0].largeImageURL};
+
+  // ultimate fallback
+  return {type:"image",src:"https://source.unsplash.com/1280x720/?cinematic"};
 }
 
-async function fetchVisual(keyword){
-  if(!keyword || keyword===lastKeyword) return;
-  lastKeyword = keyword;
+async function showMedia(data){
+  const img=document.getElementById("mediaImg");
+  const vid=document.getElementById("mediaVid");
+  let newEl=data.type==="video"?vid:img;
+  let oldEl=data.type==="video"?img:vid;
 
-  try{
-    let v = await fetch(`https://pixabay.com/api/videos/?key=${PIXABAY_KEY}&q=${encodeURIComponent(keyword)}&per_page=1&safesearch=true`);
-    let vd = await v.json();
-    if(vd.hits.length){
-      showVideo(vd.hits[0].videos.medium.url);
-      return;
-    }
-
-    let i = await fetch(`https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(keyword)}&image_type=photo&safesearch=true`);
-    let id = await i.json();
-    if(id.hits.length){
-      showImage(id.hits[0].webformatURL);
-    }
-  }catch(e){}
+  return new Promise(res=>{
+    newEl.onloadeddata=newEl.onload=()=>{
+      oldEl.classList.remove("show");
+      setTimeout(()=>{
+        oldEl.pause?.();
+        newEl.classList.add("show");
+        if(data.type==="video") newEl.play();
+        res();
+      },300);
+    };
+    newEl.src=data.src;
+  });
 }
 
-function showImage(src){
-  const img=document.getElementById("visualImg");
-  const vid=document.getElementById("visualVideo");
-  vid.pause();
-  vid.style.display="none";
-  img.src=src;
-  img.style.display="block";
+async function startPlayback(){
+  const script=document.getElementById("scriptInput").value;
+  chunks=splitScript(script); currentIndex=0;
+  speed=parseFloat(document.getElementById("voiceSpeed").value);
+  lang=document.getElementById("voiceLang").value;
+
+  document.getElementById("bgMusic").volume=0.2;
+  document.getElementById("bgMusic").play().catch(()=>{});
+  requestWakeLock();
+  nextChunk();
 }
 
-function showVideo(src){
-  const img=document.getElementById("visualImg");
-  const vid=document.getElementById("visualVideo");
-  img.style.display="none";
-  vid.src=src;
-  vid.load();
-  vid.play();
-  vid.style.display="block";
-}
+async function nextChunk(){
+  if(currentIndex>=chunks.length){ wakeLock?.release(); return;}
+  let line=chunks[currentIndex];
+  document.getElementById("textOutput").innerHTML=line;
 
-async function lockScreen(){
-  if("wakeLock" in navigator){
-    wakeLock = await navigator.wakeLock.request("screen");
-  }
-}
+  let media=await fetchMedia(keyword(line));
+  showMedia(media);
 
-function speakLine(text){
-  const u = new SpeechSynthesisUtterance(cleanForVoice(text));
-  u.lang="hi-IN";
-  speechSynthesis.speak(u);
-}
-
-function playNext(){
-  if(index>=lines.length) return;
-
-  const line = lines[index];
-  document.getElementById("caption").innerText = line;
-
-  fetchVisual(extractKeyword(line));
-  speakLine(line);
-
-  index++;
-  setTimeout(playNext, 3500);
-}
-
-function startPlay(){
-  speechSynthesis.cancel();
-  index=0;
-  lastKeyword="";
-
-  lines = document.getElementById("scriptInput").value
-    .split("\n")
-    .filter(l=>l.trim());
-
-  if(document.getElementById("mode").value==="short"){
-    lines = lines.slice(0,5);
-  }
-
-  lockScreen();
-  playNext();
+  let utter=new SpeechSynthesisUtterance(cleanText(line));
+  utter.lang=lang; utter.rate=speed; utter.pitch=1;
+  utter.onend=()=>{currentIndex++; nextChunk();}
+  speechSynthesis.cancel(); speechSynthesis.speak(utter);
 }
 </script>
 </body>
-</html>
+        </html>
