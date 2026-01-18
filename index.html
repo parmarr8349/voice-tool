@@ -17,7 +17,7 @@
       background: #fff;
       padding: 20px;
       border-radius: 16px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     }
 
     textarea {
@@ -101,6 +101,7 @@
     .voice-caption-word.big {
       font-size: 1.5em;
       color: #ffeb3b;
+      animation: bounce 0.5s;
     }
 
     .voice-caption-word.emoji {
@@ -109,12 +110,17 @@
       vertical-align: middle;
     }
 
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
     .scroll-caption-strip {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      background: red;
+      background: linear-gradient(90deg, #ff4d4f, #ffd700);
       color: black;
       font-size: 2vw;
       white-space: nowrap;
@@ -140,6 +146,7 @@
       overflow: hidden;
       z-index: 4;
       display: none;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
     }
 
     .gif-preview img {
@@ -213,6 +220,17 @@
   <script>
     let chunks = [], currentIndex = 0, speed = 1, lang = 'en-US';
     let typeSound = null;
+    let wakeLock = null;
+
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+      } catch(e){ console.error(e); }
+    }
+
+    function releaseWakeLock() {
+      if(wakeLock) wakeLock.release().catch(()=>{});
+    }
 
     function splitScript(script) {
       return script.split(/\n+/g).map(l => l.trim()).filter(l => l);
@@ -233,6 +251,7 @@
 
       chunks = splitScript(script).map(text => ({
         original: text,
+        cleanText: text.replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, ''),
         bg: suggestBG(text),
         gif: suggestGIF(text)
       }));
@@ -243,6 +262,7 @@
 
       currentIndex = 0;
       document.getElementById("downloadBtn").style.display = "none";
+      requestWakeLock();
       playNext();
     }
 
@@ -266,10 +286,11 @@
       if (currentIndex >= chunks.length) {
         document.getElementById("gifPreview").style.display = "none";
         document.getElementById("downloadBtn").style.display = "inline-block";
+        releaseWakeLock();
         return;
       }
 
-      const { original, bg, gif } = chunks[currentIndex];
+      const { original, cleanText, bg, gif } = chunks[currentIndex];
       const preview = document.getElementById("preview");
       preview.style.backgroundImage = `url('${bg}')`;
       document.getElementById("textOutput").innerHTML = wrapStylishText(original);
@@ -288,18 +309,17 @@
         typeSound.play().catch(() => {});
       }
 
-      const utterance = new SpeechSynthesisUtterance(original);
+      const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.lang = lang;
       utterance.pitch = 1;
       utterance.rate = speed;
-
       const voices = speechSynthesis.getVoices();
       const match = voices.find(v => v.lang === lang);
       if (match) utterance.voice = match;
 
       utterance.onend = () => {
         currentIndex++;
-        setTimeout(playNext, 200); // short gap between lines
+        setTimeout(playNext, 200);
       };
 
       speechSynthesis.cancel();
@@ -326,4 +346,4 @@
     }
   </script>
 </body>
-  </html>
+</html>
