@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Cinematic Voice Tool</title>
+
+<style>
+body{margin:0;font-family:Segoe UI,sans-serif;background:#111}
+.voice-visual-tool{max-width:1280px;margin:auto;background:#fff;padding:16px;border-radius:16px}
+textarea{width:100%;height:160px;font-size:16px;padding:10px;border-radius:8px}
+button,select{padding:10px 16px;font-size:15px;background:#ff4d4f;color:#fff;border:none;border-radius:6px;margin:4px}
+.voice-visual-preview{
+  margin-top:20px;
+  width:100%;
+  aspect-ratio:16/9;
+  background:#000;
+  color:#fff;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  font-size:2.8vw;
+  border-radius:16px;
+  background-size:cover;
+  background-position:center;
+  position:relative;
+  overflow:hidden;
+}
+.voice-visual-preview.short{aspect-ratio:9/16;font-size:4vw}
+.voice-caption-container{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.voice-caption-word{opacity:0;animation:fade .4s forwards}
+.big{font-size:1.4em;color:#ffeb3b}
+.scroll-caption-strip{
+  position:absolute;bottom:0;left:0;right:0;
+  background:red;color:black;font-size:2vw;
+  height:2.5em;line-height:2.5em;overflow:hidden
+}
+.scroll-caption-strip span{
+  display:inline-block;padding-left:100%;
+  animation:scroll 18s linear infinite
+}
+@keyframes scroll{to{transform:translateX(-100%)}}
+@keyframes fade{to{opacity:1}}
+.zoom{animation:zoom 4s ease-in-out}
+@keyframes zoom{from{transform:scale(1)}to{transform:scale(1.08)}}
+.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
+.hook{box-shadow:0 0 40px red}
+</style>
+</head>
+
+<body>
+<div class="voice-visual-tool">
+
+<h2>🎙️ Ultimate Cinematic Voice Tool</h2>
+
+<textarea id="scriptInput" placeholder="Script paste karo (har line new scene)..."></textarea><br>
+
+<select id="voiceLang">
+  <option value="en-US">English</option>
+  <option value="hi-IN">Hindi</option>
+</select>
+
+<select id="voiceSpeed">
+  <option value="0.9">Slow</option>
+  <option value="1" selected>Normal</option>
+  <option value="1.2">Fast</option>
+</select>
+
+<button onclick="setMode('long')">🎬 Long</button>
+<button onclick="setMode('short')">📱 Shorts</button>
+<button onclick="startPlayback()">▶ Play</button>
+
+<div class="voice-visual-preview long" id="preview">
+  <div id="textOutput"></div>
+  <div class="scroll-caption-strip">
+    <span id="captionScroll">LIKE • SHARE • SUBSCRIBE</span>
+  </div>
+</div>
+
+<audio id="bgMusic" loop preload="auto"
+src="https://files.catbox.moe/f8xqq8.mp3"></audio>
+
+</div>
+
+<script>
+let chunks=[],index=0,wakeLock=null;
+
+function splitScript(t){
+  return t.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+}
+
+function setMode(m){
+  const p=document.getElementById("preview");
+  p.classList.remove("short","long");
+  p.classList.add(m);
+}
+
+async function requestWake(){
+  if('wakeLock'in navigator){
+    wakeLock=await navigator.wakeLock.request('screen');
+  }
+}
+
+function startPlayback(){
+  chunks=splitScript(document.getElementById("scriptInput").value);
+  index=0;
+  const bg=document.getElementById("bgMusic");
+  bg.volume=.2;bg.play().catch(()=>{});
+  requestWake();
+  playNext();
+}
+
+function playNext(){
+  if(index>=chunks.length){
+    if(wakeLock)wakeLock.release();
+    document.getElementById("bgMusic").pause();
+    return;
+  }
+
+  const text=chunks[index];
+  const p=document.getElementById("preview");
+  p.className=p.className.replace(" shake","").replace(" zoom","");
+  p.classList.add("zoom");
+  if(index===0)p.classList.add("hook");
+  if(/scam|arrest|denied|warning/i.test(text))p.classList.add("shake");
+
+  if(index>=chunks.length-2){
+    document.getElementById("captionScroll").innerText=
+    "👍 LIKE • 🔔 SUBSCRIBE • 💬 COMMENT";
+  }
+
+  p.style.backgroundImage=
+  "url('https://source.unsplash.com/1280x720/?cinematic,dark')";
+
+  document.getElementById("textOutput").innerHTML=wrapText(text);
+
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=document.getElementById("voiceLang").value;
+  u.rate=parseFloat(document.getElementById("voiceSpeed").value)+(index===0?.3:0);
+
+  u.onend=()=>{index++;playNext()};
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+function wrapText(t){
+  const map={money:"💰",scam:"⚠️",free:"🔥",urgent:"🚨",police:"🚔"};
+  return '<div class="voice-caption-container">'+
+  t.split(/\s+/).map((w,i)=>{
+    let cls="";
+    Object.keys(map).forEach(k=>{
+      if(w.toLowerCase().includes(k)){w+=map[k];cls="big";}
+    });
+    return `<span class="voice-caption-word ${cls}" style="animation-delay:${i*.12}s">${w}</span>`;
+  }).join(" ")+'</div>';
+}
+</script>
+</body>
+</html>
