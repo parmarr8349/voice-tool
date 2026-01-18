@@ -2,213 +2,193 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
+<title>Story Visual Player</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cinematic Voice Tool – Pixabay API</title>
 
 <style>
-body{margin:0;padding:0;font-family:'Segoe UI',sans-serif;background:#f2f2f2;}
-.voice-visual-tool{max-width:1280px;margin:auto;background:#fff;padding:20px;border-radius:16px;box-shadow:0 0 20px rgba(0,0,0,.15);}
-textarea{width:100%;height:180px;font-size:16px;padding:10px;border-radius:8px;border:1px solid #ccc;resize:none;}
-button,select{padding:12px 22px;font-size:16px;background:#ff4d4f;color:#fff;border:none;border-radius:6px;cursor:pointer;margin:6px 6px 6px 0;}
-
-.voice-visual-preview{
-  margin-top:20px;
-  aspect-ratio:16/9;
-  position:relative;
-  overflow:hidden;
-  border-radius:20px;
+body{
+  margin:0;
   background:#000;
   color:#fff;
+  font-family: system-ui, sans-serif;
 }
-
-.visual-preview{
-  position:absolute;
-  inset:0;
-  z-index:1;
+#container{
+  max-width:600px;
+  margin:auto;
+  padding:10px;
 }
-.visual-preview img,
-.visual-preview video{
+#visualBox{
+  position:relative;
+  width:100%;
+  height:320px;
+  background:#111;
+  border-radius:14px;
+  overflow:hidden;
+}
+#visualBox img,
+#visualBox video{
   width:100%;
   height:100%;
   object-fit:cover;
   display:none;
 }
-
-.text-container{
-  position:relative;
-  z-index:2;
-  height:100%;
-  display:flex;
-  justify-content:center;
-  align-items:center;
+#caption{
+  margin-top:12px;
+  font-size:20px;
   text-align:center;
-  padding:20px;
-  font-size:2.5vw;
-  font-weight:700;
-  text-shadow:2px 2px 10px #000;
+  line-height:1.4;
 }
-
-.voice-caption-container{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
-.voice-caption-word{opacity:0;animation:fadeIn .5s forwards;}
-.voice-caption-word.big{font-size:1.5em;color:#ffeb3b;}
-.voice-caption-word.emoji{font-size:2.5em;}
-
-.scroll-caption-strip{
-  position:absolute;bottom:0;left:0;right:0;
-  background:linear-gradient(90deg,#ff4d4f,#ffd700);
-  color:#000;font-weight:700;
-  height:2.5em;line-height:2.5em;
-  white-space:nowrap;overflow:hidden;
-  z-index:3;
+textarea{
+  width:100%;
+  height:160px;
+  margin-top:10px;
+  border-radius:10px;
+  padding:10px;
+  font-size:16px;
 }
-.scroll-caption-strip span{
-  display:inline-block;padding-left:100%;
-  animation:scroll 18s linear infinite;
+button{
+  width:100%;
+  margin-top:10px;
+  padding:12px;
+  font-size:18px;
+  border:none;
+  border-radius:10px;
+  background:#ff0055;
+  color:#fff;
 }
-
-@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
-@keyframes fadeIn{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
-
-@media(max-width:768px){
-  .text-container{font-size:4vw;}
+select{
+  width:100%;
+  margin-top:8px;
+  padding:10px;
+  border-radius:10px;
+  font-size:16px;
 }
 </style>
 </head>
 
 <body>
-<div class="voice-visual-tool">
-<h2>🎬 Cinematic Voice Tool (Auto Video/Image)</h2>
+<div id="container">
 
-<textarea id="scriptInput" placeholder="Script yahan paste karo..."></textarea><br>
-
-<select id="voiceLang">
-  <option value="hi-IN">Hindi</option>
-  <option value="en-US">English</option>
-</select>
-
-<select id="voiceSpeed">
-  <option value="0.8">Slow</option>
-  <option value="1" selected>Normal</option>
-  <option value="1.2">Fast</option>
-</select>
-
-<select id="videoLength">
-  <option value="short">Short</option>
-  <option value="long" selected>Long</option>
-</select>
-
-<button onclick="startPlayback()">▶️ Play</button>
-
-<div class="voice-visual-preview">
-  <div class="visual-preview">
-    <img id="visualImg">
-    <video id="visualVideo" autoplay muted loop playsinline></video>
-  </div>
-
-  <div class="text-container" id="textOutput"></div>
-
-  <div class="scroll-caption-strip">
-    <span>LIKE • SHARE • SUBSCRIBE • LIKE • SHARE • SUBSCRIBE</span>
-  </div>
+<div id="visualBox">
+  <img id="visualImg">
+  <video id="visualVideo" autoplay muted loop playsinline></video>
 </div>
+
+<div id="caption">Script play karne ke liye Play dabaye</div>
+
+<select id="mode">
+  <option value="long">Long Video</option>
+  <option value="short">Short Video</option>
+</select>
+
+<textarea id="scriptInput">
+1️⃣ एक छोटे से गाँव में रामू नाम का एक गरीब लड़का रहता था 🏡
+2️⃣ वह बहुत मेहनती था 💪
+3️⃣ एक दिन उसकी किस्मत बदलने वाली थी ✨
+</textarea>
+
+<button onclick="startPlay()">▶ Play</button>
+
 </div>
 
 <script>
-/* ================== PIXABAY API ================== */
-const PIXABAY_KEY="54255969-e91e54d4235ef4c9b25009a63";
+const PIXABAY_KEY = "54255969-e91e54d4235ef4c9b25009a63";
+let lines = [];
+let index = 0;
+let wakeLock = null;
+let lastKeyword = "";
 
-/* ================== GLOBALS ================== */
-let chunks=[],currentIndex=0,wakeLock=null;
-
-/* ================== WAKE LOCK ================== */
-async function requestWakeLock(){
-  try{ if("wakeLock" in navigator) wakeLock=await navigator.wakeLock.request("screen"); }
-  catch(e){console.log(e);}
+function cleanForVoice(text){
+  return text.replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/gu,"");
 }
 
-/* ================== HELPERS ================== */
-function splitScript(t){return t.split(/\n+/).map(l=>l.trim()).filter(Boolean);}
-function cleanForVoice(t){
-  return t
-   .replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/gu,"")
-   .replace(/GIF suggestion:.*/gi,"");
+function extractKeyword(line){
+  return line
+    .replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/gu,"")
+    .replace(/[0-9️⃣]/g,"")
+    .split(/\s+/)
+    .find(w => w.length > 2) || "";
 }
 
-function extractKeyword(t){
-  const stop=["है","था","थे","की","का","के","में","और","एक","से","for","the","is"];
-  let w=t.replace(/[^\p{L}\s]/gu,"").split(/\s+/)
-        .filter(x=>x.length>2 && !stop.includes(x.toLowerCase()));
-  return w[0]||"nature";
-}
-
-/* ================== PIXABAY FETCH ================== */
 async function fetchVisual(keyword){
+  if(!keyword || keyword===lastKeyword) return;
+  lastKeyword = keyword;
+
   try{
-    let v=await fetch(`https://pixabay.com/api/videos/?key=${PIXABAY_KEY}&q=${encodeURIComponent(keyword)}&per_page=3&safesearch=true`);
-    let vd=await v.json();
-    if(vd.hits?.length) return {type:"video",url:vd.hits[0].videos.medium.url};
+    let v = await fetch(`https://pixabay.com/api/videos/?key=${PIXABAY_KEY}&q=${encodeURIComponent(keyword)}&per_page=1&safesearch=true`);
+    let vd = await v.json();
+    if(vd.hits.length){
+      showVideo(vd.hits[0].videos.medium.url);
+      return;
+    }
 
-    let i=await fetch(`https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(keyword)}&image_type=photo&safesearch=true`);
-    let id=await i.json();
-    if(id.hits?.length) return {type:"image",url:id.hits[0].webformatURL};
-  }catch(e){console.log(e);}
-  return {type:"image",url:"https://picsum.photos/1280/720"};
+    let i = await fetch(`https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(keyword)}&image_type=photo&safesearch=true`);
+    let id = await i.json();
+    if(id.hits.length){
+      showImage(id.hits[0].webformatURL);
+    }
+  }catch(e){}
 }
 
-/* ================== PLAY ================== */
-function startPlayback(){
-  let script=document.getElementById("scriptInput").value;
-  let len=document.getElementById("videoLength").value;
-
-  chunks=splitScript(script).map(t=>({
-    original:t,
-    voice:cleanForVoice(t),
-    key:extractKeyword(t)
-  }));
-
-  if(len==="short") chunks=chunks.slice(0,5);
-  currentIndex=0;
-  requestWakeLock();
-  playNext();
-}
-
-async function playNext(){
-  if(currentIndex>=chunks.length){
-    if(wakeLock) wakeLock.release();
-    return;
-  }
-
-  const {original,voice,key}=chunks[currentIndex];
-  document.getElementById("textOutput").innerHTML=wrapText(original);
-
-  const visual=await fetchVisual(key);
+function showImage(src){
   const img=document.getElementById("visualImg");
   const vid=document.getElementById("visualVideo");
+  vid.pause();
+  vid.style.display="none";
+  img.src=src;
+  img.style.display="block";
+}
 
-  if(visual.type==="video"){
-    vid.src=visual.url;vid.style.display="block";img.style.display="none";
-  }else{
-    img.src=visual.url;img.style.display="block";vid.style.display="none";
+function showVideo(src){
+  const img=document.getElementById("visualImg");
+  const vid=document.getElementById("visualVideo");
+  img.style.display="none";
+  vid.src=src;
+  vid.load();
+  vid.play();
+  vid.style.display="block";
+}
+
+async function lockScreen(){
+  if("wakeLock" in navigator){
+    wakeLock = await navigator.wakeLock.request("screen");
   }
+}
 
-  let u=new SpeechSynthesisUtterance(voice);
-  u.lang=document.getElementById("voiceLang").value;
-  u.rate=parseFloat(document.getElementById("voiceSpeed").value);
-  u.onend=()=>{currentIndex++;playNext();};
-  speechSynthesis.cancel();
+function speakLine(text){
+  const u = new SpeechSynthesisUtterance(cleanForVoice(text));
+  u.lang="hi-IN";
   speechSynthesis.speak(u);
 }
 
-/* ================== TEXT STYLE ================== */
-function wrapText(t){
-  const hot=["₹","$","FREE","SCAM","ALERT","NOW"];
-  return '<div class="voice-caption-container">'+
-  t.split(/\s+/).map((w,i)=>{
-    let c="";
-    if(/^[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/u.test(w)) c="emoji";
-    else if(hot.some(h=>w.toUpperCase().includes(h))) c="big";
-    return `<span class="voice-caption-word ${c}" style="animation-delay:${i*.12}s">${w}</span>`;
-  }).join(" ")+'</div>';
+function playNext(){
+  if(index>=lines.length) return;
+
+  const line = lines[index];
+  document.getElementById("caption").innerText = line;
+
+  fetchVisual(extractKeyword(line));
+  speakLine(line);
+
+  index++;
+  setTimeout(playNext, 3500);
+}
+
+function startPlay(){
+  speechSynthesis.cancel();
+  index=0;
+  lastKeyword="";
+
+  lines = document.getElementById("scriptInput").value
+    .split("\n")
+    .filter(l=>l.trim());
+
+  if(document.getElementById("mode").value==="short"){
+    lines = lines.slice(0,5);
+  }
+
+  lockScreen();
+  playNext();
 }
 </script>
 </body>
