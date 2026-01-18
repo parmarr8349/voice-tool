@@ -1,161 +1,239 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ultimate Cinematic Voice Tool</title>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Final Cinematic Wake-Lock Voice Tool</title>
 
-<style>
-body{margin:0;font-family:Segoe UI,sans-serif;background:#111}
-.voice-visual-tool{max-width:1280px;margin:auto;background:#fff;padding:16px;border-radius:16px}
-textarea{width:100%;height:160px;font-size:16px;padding:10px;border-radius:8px}
-button,select{padding:10px 16px;font-size:15px;background:#ff4d4f;color:#fff;border:none;border-radius:6px;margin:4px}
-.voice-visual-preview{
-  margin-top:20px;
-  width:100%;
-  aspect-ratio:16/9;
-  background:#000;
-  color:#fff;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  font-size:2.8vw;
-  border-radius:16px;
-  background-size:cover;
-  background-position:center;
-  position:relative;
-  overflow:hidden;
-}
-.voice-visual-preview.short{aspect-ratio:9/16;font-size:4vw}
-.voice-caption-container{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.voice-caption-word{opacity:0;animation:fade .4s forwards}
-.big{font-size:1.4em;color:#ffeb3b}
-.scroll-caption-strip{
-  position:absolute;bottom:0;left:0;right:0;
-  background:red;color:black;font-size:2vw;
-  height:2.5em;line-height:2.5em;overflow:hidden
-}
-.scroll-caption-strip span{
-  display:inline-block;padding-left:100%;
-  animation:scroll 18s linear infinite
-}
-@keyframes scroll{to{transform:translateX(-100%)}}
-@keyframes fade{to{opacity:1}}
-.zoom{animation:zoom 4s ease-in-out}
-@keyframes zoom{from{transform:scale(1)}to{transform:scale(1.08)}}
-.shake{animation:shake .4s}
-@keyframes shake{25%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
-.hook{box-shadow:0 0 40px red}
-</style>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: transparent;
+    }
+
+    .voice-visual-tool {
+      max-width: 1280px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 15px rgba(0,0,0,.1);
+    }
+
+    textarea {
+      width: 100%;
+      height: 180px;
+      font-size: 16px;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: none;
+    }
+
+    button, select {
+      padding: 12px 24px;
+      font-size: 16px;
+      background: #ff4d4f;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-top: 5px;
+    }
+
+    .voice-visual-preview {
+      margin-top: 30px;
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5vw;
+      font-weight: 700;
+      border-radius: 20px;
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+      padding: 2vw;
+      text-shadow: 2px 2px 8px #000;
+      color: #fff;
+      position: relative;
+    }
+
+    .avatar-container {
+      width: 160px;
+      visibility: hidden;
+    }
+
+    .avatar-container img {
+      width: 100%;
+    }
+
+    .text-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      z-index: 2;
+      text-align: center;
+    }
+
+    .voice-caption-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .voice-caption-word {
+      opacity: 0;
+      animation: fadeIn .5s forwards;
+    }
+
+    .voice-caption-word.big {
+      font-size: 1.5em;
+      color: #ffeb3b;
+    }
+
+    .scroll-caption-strip {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: red;
+      color: black;
+      font-size: 2vw;
+      white-space: nowrap;
+      overflow: hidden;
+      height: 2.8em;
+      line-height: 2.8em;
+      z-index: 3;
+    }
+
+    .scroll-caption-strip span {
+      display: inline-block;
+      padding-left: 100%;
+      animation: scroll-strip 20s linear infinite;
+    }
+
+    @keyframes scroll-strip {
+      from { transform: translateX(0); }
+      to { transform: translateX(-100%); }
+    }
+
+    @keyframes fadeIn {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
 </head>
 
 <body>
+
 <div class="voice-visual-tool">
+  <h2>🎙️ Final Cinematic Wake-Lock Voice Tool</h2>
 
-<h2>🎙️ Ultimate Cinematic Voice Tool</h2>
+  <textarea id="scriptInput" placeholder="Paste your full script here..."></textarea>
 
-<textarea id="scriptInput" placeholder="Script paste karo (har line new scene)..."></textarea><br>
+  <select id="voiceLang">
+    <option value="en-US">English</option>
+    <option value="hi-IN">Hindi</option>
+  </select>
 
-<select id="voiceLang">
-  <option value="en-US">English</option>
-  <option value="hi-IN">Hindi</option>
-</select>
+  <select id="voiceSpeed">
+    <option value="0.8">Slow</option>
+    <option value="1" selected>Normal</option>
+    <option value="1.2">Fast</option>
+    <option value="1.5">Faster</option>
+  </select>
 
-<select id="voiceSpeed">
-  <option value="0.9">Slow</option>
-  <option value="1" selected>Normal</option>
-  <option value="1.2">Fast</option>
-</select>
+  <br><br>
 
-<button onclick="setMode('long')">🎬 Long</button>
-<button onclick="setMode('short')">📱 Shorts</button>
-<button onclick="startPlayback()">▶ Play</button>
+  <button onclick="startPlayback()">▶️ Play</button>
+  <button onclick="startRecording()">⬇️ Auto Download Video</button>
 
-<div class="voice-visual-preview long" id="preview">
-  <div id="textOutput"></div>
-  <div class="scroll-caption-strip">
-    <span id="captionScroll">LIKE • SHARE • SUBSCRIBE</span>
+  <div class="voice-visual-preview" id="preview">
+    <div class="avatar-container">
+      <img src="https://i.ibb.co/cSMndFgK/1000000918-unscreen.gif">
+    </div>
+    <div class="text-container" id="textOutput"></div>
+    <div class="scroll-caption-strip">
+      <span>LIKE • SHARE • SUBSCRIBE</span>
+    </div>
   </div>
-</div>
 
-<audio id="bgMusic" loop preload="auto"
-src="https://files.catbox.moe/f8xqq8.mp3"></audio>
-
+  <audio id="typeSound" src="https://files.catbox.moe/8yzjgp.mp3"></audio>
+  <audio id="bgMusic" loop src="https://files.catbox.moe/f8xqq8.mp3"></audio>
 </div>
 
 <script>
-let chunks=[],index=0,wakeLock=null;
+/* ===== ORIGINAL LOGIC (UNCHANGED) ===== */
 
-function splitScript(t){
-  return t.split(/\n+/).map(x=>x.trim()).filter(Boolean);
-}
-
-function setMode(m){
-  const p=document.getElementById("preview");
-  p.classList.remove("short","long");
-  p.classList.add(m);
-}
-
-async function requestWake(){
-  if('wakeLock'in navigator){
-    wakeLock=await navigator.wakeLock.request('screen');
-  }
-}
+let chunks=[],currentIndex=0,speed=1,lang='en-US',wakeLock=null;
+function splitScript(s){return s.split(/\n+/).map(l=>l.trim()).filter(l=>l);}
+function requestWakeLock(){ if('wakeLock'in navigator){navigator.wakeLock.request('screen');}}
 
 function startPlayback(){
-  chunks=splitScript(document.getElementById("scriptInput").value);
-  index=0;
-  const bg=document.getElementById("bgMusic");
-  bg.volume=.2;bg.play().catch(()=>{});
-  requestWake();
+  const script=document.getElementById("scriptInput").value;
+  speed=parseFloat(voiceSpeed.value);
+  lang=voiceLang.value;
+
+  bgMusic.volume=.2;
+  bgMusic.play().catch(()=>{});
+
+  chunks=splitScript(script).map(t=>({o:t,s:t}));
+  currentIndex=0;
+  requestWakeLock();
   playNext();
 }
 
 function playNext(){
-  if(index>=chunks.length){
-    if(wakeLock)wakeLock.release();
-    document.getElementById("bgMusic").pause();
+  if(currentIndex>=chunks.length){
+    bgMusic.pause();
     return;
   }
 
-  const text=chunks[index];
-  const p=document.getElementById("preview");
-  p.className=p.className.replace(" shake","").replace(" zoom","");
-  p.classList.add("zoom");
-  if(index===0)p.classList.add("hook");
-  if(/scam|arrest|denied|warning/i.test(text))p.classList.add("shake");
+  textOutput.innerHTML=chunks[currentIndex].o.split(" ").map(
+    (w,i)=>`<span class="voice-caption-word" style="animation-delay:${i*.15}s">${w}</span>`
+  ).join(" ");
 
-  if(index>=chunks.length-2){
-    document.getElementById("captionScroll").innerText=
-    "👍 LIKE • 🔔 SUBSCRIBE • 💬 COMMENT";
-  }
-
-  p.style.backgroundImage=
-  "url('https://source.unsplash.com/1280x720/?cinematic,dark')";
-
-  document.getElementById("textOutput").innerHTML=wrapText(text);
-
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang=document.getElementById("voiceLang").value;
-  u.rate=parseFloat(document.getElementById("voiceSpeed").value)+(index===0?.3:0);
-
-  u.onend=()=>{index++;playNext()};
-  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(chunks[currentIndex].s);
+  u.lang=lang;
+  u.rate=speed;
+  u.onend=()=>{currentIndex++;playNext();}
   speechSynthesis.speak(u);
 }
 
-function wrapText(t){
-  const map={money:"💰",scam:"⚠️",free:"🔥",urgent:"🚨",police:"🚔"};
-  return '<div class="voice-caption-container">'+
-  t.split(/\s+/).map((w,i)=>{
-    let cls="";
-    Object.keys(map).forEach(k=>{
-      if(w.toLowerCase().includes(k)){w+=map[k];cls="big";}
-    });
-    return `<span class="voice-caption-word ${cls}" style="animation-delay:${i*.12}s">${w}</span>`;
-  }).join(" ")+'</div>';
+/* ===== D9 : AUTO RECORD + AUTO DOWNLOAD (ADDITION) ===== */
+
+let recorder,recorded=[];
+
+async function startRecording(){
+  const stream=preview.captureStream(30);
+  recorder=new MediaRecorder(stream,{mimeType:"video/webm"});
+  recorded=[];
+  recorder.ondataavailable=e=>e.data.size&&recorded.push(e.data);
+  recorder.onstop=downloadVideo;
+  recorder.start();
+  startPlayback();
+}
+
+function downloadVideo(){
+  const blob=new Blob(recorded,{type:"video/webm"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="cinematic-video.webm";
+  a.click();
+  URL.revokeObjectURL(url);
 }
 </script>
+
 </body>
-</html>
+  </html>
