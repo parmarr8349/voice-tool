@@ -1,349 +1,123 @@
 <html lang="hi">
 <head>
-  <meta charset="UTF-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>Final Cinematic Wake-Lock Voice Tool</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: transparent;
-    }
-
-    .voice-visual-tool {
-      max-width: 1280px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-    }
-
-    textarea {
-      width: 100%;
-      height: 180px;
-      font-size: 16px;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      resize: none;
-    }
-
-    button, select {
-      padding: 12px 24px;
-      font-size: 16px;
-      background: #ff4d4f;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-right: 10px;
-    }
-
-    .voice-visual-preview {
-      margin-top: 30px;
-      aspect-ratio: 16 / 9;
-      width: 100%;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5vw;
-      font-weight: 700;
-      border-radius: 20px;
-      overflow: hidden;
-      background-size: cover;
-      background-position: center;
-      padding: 2vw;
-      text-shadow: 2px 2px 8px #000;
-      color: #fff;
-      position: relative;
-    }
-
-    .avatar-container {
-      flex: 0 0 auto;
-      width: 160px;
-      visibility: hidden;
-    }
-
-    .avatar-container img {
-      width: 100%;
-      height: auto;
-    }
-
-    .text-container {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-      z-index: 2;
-      text-align: center;
-    }
-
-    .voice-caption-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-    }
-
-    .voice-caption-word {
-      display: inline-block;
-      opacity: 0;
-      animation: fadeIn 0.5s forwards;
-      white-space: nowrap;
-      position: relative;
-    }
-
-    .voice-caption-word.big {
-      font-size: 1.5em;
-      color: #ffeb3b;
-      animation: bounce 0.5s;
-    }
-
-    .voice-caption-word.emoji {
-      font-size: 2.5em;
-      line-height: 1;
-      vertical-align: middle;
-    }
-
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .scroll-caption-strip {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(90deg, #ff4d4f, #ffd700);
-      color: black;
-      font-size: 2vw;
-      white-space: nowrap;
-      overflow: hidden;
-      height: 2.8em;
-      line-height: 2.8em;
-      z-index: 3;
-    }
-
-    .scroll-caption-strip span {
-      display: inline-block;
-      padding-left: 100%;
-      animation: scroll-strip 20s linear infinite;
-    }
-
-    .gif-preview {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 200px;
-      height: 120px;
-      border-radius: 12px;
-      overflow: hidden;
-      z-index: 4;
-      display: none;
-      box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    }
-
-    .gif-preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .download-btn {
-      display: none;
-      margin-top: 20px;
-    }
-
-    @keyframes scroll-strip {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-100%); }
-    }
-
-    @keyframes fadeIn {
-      from { transform: translateY(10px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    @media (max-width: 768px) {
-      .voice-visual-preview {
-        font-size: 4vw;
-      }
-
-      .text-container {
-        padding-left: 0;
-        justify-content: center;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Cinematic Voice Tool with GIF Preview</title>
+<style>
+body{margin:0;padding:0;font-family:'Segoe UI',sans-serif;background:transparent;}
+.voice-visual-tool{max-width:1280px;margin:auto;background:#fff;padding:20px;border-radius:16px;box-shadow:0 0 20px rgba(0,0,0,0.15);}
+textarea{width:100%;height:180px;font-size:16px;padding:10px;margin-bottom:10px;border-radius:8px;border:1px solid #ccc;resize:none;}
+button,select{padding:12px 24px;font-size:16px;background:#ff4d4f;color:white;border:none;border-radius:6px;cursor:pointer;margin-right:10px;}
+.voice-visual-preview{margin-top:30px;aspect-ratio:16/9;width:100%;background:#000;display:flex;align-items:center;justify-content:center;font-size:2.5vw;font-weight:700;border-radius:20px;overflow:hidden;background-size:cover;background-position:center;padding:2vw;text-shadow:2px 2px 8px #000;color:#fff;position:relative;}
+.avatar-container{flex:0 0 auto;width:160px;visibility:hidden;}
+.avatar-container img{width:100%;height:auto;}
+.text-container{flex:1;display:flex;justify-content:center;align-items:center;flex-wrap:wrap;z-index:2;text-align:center;}
+.voice-caption-container{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+.voice-caption-word{display:inline-block;opacity:0;animation:fadeIn 0.5s forwards;white-space:nowrap;position:relative;}
+.voice-caption-word.big{font-size:1.5em;color:#ffeb3b;animation:bounce 0.5s;}
+.voice-caption-word.emoji{font-size:2.5em;line-height:1;vertical-align:middle;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.scroll-caption-strip{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(90deg,#ff4d4f,#ffd700);color:black;font-size:2vw;white-space:nowrap;overflow:hidden;height:2.8em;line-height:2.8em;z-index:3;}
+.scroll-caption-strip span{display:inline-block;padding-left:100%;animation:scroll-strip 20s linear infinite;}
+.gif-preview{position:absolute;top:10px;right:10px;width:200px;height:120px;border-radius:12px;overflow:hidden;z-index:4;display:none;box-shadow:0 0 15px rgba(0,0,0,0.5);}
+.gif-preview img{width:100%;height:100%;object-fit:cover;}
+.download-btn{display:none;margin-top:20px;}
+@keyframes scroll-strip{0%{transform:translateX(0);}100%{transform:translateX(-100%);}}
+@keyframes fadeIn{from{transform:translateY(10px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+@media(max-width:768px){.voice-visual-preview{font-size:4vw;}.text-container{padding-left:0;justify-content:center;}}
+</style>
 </head>
 <body>
-  <div class="voice-visual-tool">
-    <h2>🎙️ Final Cinematic Wake-Lock Voice Tool</h2>
-    <textarea id="scriptInput" placeholder="Paste your full script here..."></textarea>
-    <br />
-    <label for="voiceLang">Language:</label>
-    <select id="voiceLang">
-      <option value="en-US">English</option>
-      <option value="hi-IN">Hindi</option>
-    </select>
-    <label for="voiceSpeed">Speed:</label>
-    <select id="voiceSpeed">
-      <option value="0.8">Slow</option>
-      <option selected="" value="1">Normal</option>
-      <option value="1.2">Fast</option>
-      <option value="1.5">Faster</option>
-    </select>
-    <label for="videoLength">Video Length:</label>
-    <select id="videoLength">
-      <option value="short">Short</option>
-      <option value="long" selected>Long</option>
-    </select>
-    <button onclick="startPlayback()">▶️ Play</button>
-    <div class="voice-visual-preview" id="preview">
-      <div class="avatar-container">
-        <img src="https://i.ibb.co/cSMndFgK/1000000918-unscreen.gif" />
-      </div>
-      <div class="text-container" id="textOutput"></div>
-      <div class="scroll-caption-strip"><span id="captionScroll">LIKE • SHARE • SUBSCRIBE</span></div>
-      <div class="gif-preview" id="gifPreview"><img src="" /></div>
-    </div>
-    <button class="download-btn" id="downloadBtn">💾 Download Preview GIF</button>
-    <audio id="typeSound" preload="auto" src="https://files.catbox.moe/8yzjgp.mp3"></audio>
-    <audio id="bgMusic" loop="" preload="auto" src="https://files.catbox.moe/f8xqq8.mp3"></audio>
-  </div>
-  <script>
-    let chunks = [], currentIndex = 0, speed = 1, lang = 'en-US';
-    let typeSound = null;
-    let wakeLock = null;
+<div class="voice-visual-tool">
+<h2>🎙️ Cinematic Voice Tool with GIF Preview</h2>
+<textarea id="scriptInput" placeholder="Paste your full script here..."></textarea><br/>
+<label for="voiceLang">Language:</label>
+<select id="voiceLang"><option value="en-US">English</option><option value="hi-IN">Hindi</option></select>
+<label for="voiceSpeed">Speed:</label>
+<select id="voiceSpeed"><option value="0.8">Slow</option><option selected value="1">Normal</option><option value="1.2">Fast</option><option value="1.5">Faster</option></select>
+<label for="videoLength">Video Length:</label>
+<select id="videoLength"><option value="short">Short</option><option value="long" selected>Long</option></select>
+<button onclick="startPlayback()">▶️ Play</button>
 
-    async function requestWakeLock() {
-      try {
-        if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
-      } catch(e){ console.error(e); }
-    }
+<div class="voice-visual-preview" id="preview">
+  <div class="avatar-container"><img src="https://i.ibb.co/cSMndFgK/1000000918-unscreen.gif"/></div>
+  <div class="text-container" id="textOutput"></div>
+  <div class="scroll-caption-strip"><span id="captionScroll">LIKE • SHARE • SUBSCRIBE</span></div>
+  <div class="gif-preview" id="gifPreview"><img src=""/></div>
+</div>
 
-    function releaseWakeLock() {
-      if(wakeLock) wakeLock.release().catch(()=>{});
-    }
+<button class="download-btn" id="downloadBtn">💾 Download Preview GIF</button>
+<audio id="typeSound" preload="auto" src="https://files.catbox.moe/8yzjgp.mp3"></audio>
+<audio id="bgMusic" loop preload="auto" src="https://files.catbox.moe/f8xqq8.mp3"></audio>
+</div>
 
-    function splitScript(script) {
-      return script.split(/\n+/g).map(l => l.trim()).filter(l => l);
-    }
+<script>
+let chunks=[],currentIndex=0,speed=1,lang='en-US',wakeLock=null,typeSound=null;
 
-    function startPlayback() {
-      const script = document.getElementById("scriptInput").value;
-      speed = parseFloat(document.getElementById("voiceSpeed").value);
-      lang = document.getElementById("voiceLang").value;
-      const lengthOption = document.getElementById("videoLength").value;
+async function requestWakeLock(){try{if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen');}catch(e){console.error(e);}}
+function releaseWakeLock(){if(wakeLock) wakeLock.release().catch(()=>{});}
+function splitScript(script){return script.split(/\n+/g).map(l=>l.trim()).filter(l=>l);}
+function startPlayback(){
+const script=document.getElementById("scriptInput").value;
+speed=parseFloat(document.getElementById("voiceSpeed").value);
+lang=document.getElementById("voiceLang").value;
+const lengthOption=document.getElementById("videoLength").value;
+typeSound=document.getElementById("typeSound");typeSound.load();
+const bgMusic=document.getElementById("bgMusic");bgMusic.volume=0.2;bgMusic.play().catch(()=>{});
 
-      typeSound = document.getElementById("typeSound");
-      typeSound.load();
+chunks=splitScript(script).map(text=>({original:text,cleanText:text.replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu,''),bg:suggestBG(text),gif:suggestGIF(text)}));
 
-      const bgMusic = document.getElementById("bgMusic");
-      bgMusic.volume = 0.2;
-      bgMusic.play().catch(() => {});
+if(lengthOption==='short'){chunks=chunks.slice(0,Math.min(5,chunks.length));}
+currentIndex=0;
+document.getElementById("downloadBtn").style.display="none";
+requestWakeLock();
+playNext();
+}
 
-      chunks = splitScript(script).map(text => ({
-        original: text,
-        cleanText: text.replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, ''),
-        bg: suggestBG(text),
-        gif: suggestGIF(text)
-      }));
+function suggestBG(text){
+if(/credit card|bank/i.test(text)) return "https://source.unsplash.com/1280x720/?creditcard,bank";
+if(/job|work/i.test(text)) return "https://source.unsplash.com/1280x720/?office,work";
+if(/family|home/i.test(text)) return "https://source.unsplash.com/1280x720/?family,home";
+if(/visa|passport/i.test(text)) return "https://source.unsplash.com/1280x720/?airport,passport";
+return "https://source.unsplash.com/1280x720/?india,people";
+}
 
-      if (lengthOption === "short") {
-        chunks = chunks.slice(0, Math.min(5, chunks.length));
-      }
+function suggestGIF(text){
+if(/money|cash|dollar|rupee/i.test(text)) return "https://media.giphy.com/media/l0HlQ7LRalxA5kxqA/giphy.gif";
+if(/family|home/i.test(text)) return "https://media.giphy.com/media/3ohhwf34cGDoFFhRfy/giphy.gif";
+if(/job|work/i.test(text)) return "https://media.giphy.com/media/26tPoyDhjiJ2g7rEs/giphy.gif";
+if(/love|heart/i.test(text)) return "https://media.giphy.com/media/3orieYy9C1tGqVfnG8/giphy.gif";
+return "";
+}
 
-      currentIndex = 0;
-      document.getElementById("downloadBtn").style.display = "none";
-      requestWakeLock();
-      playNext();
-    }
+function playNext(){
+if(currentIndex>=chunks.length){document.getElementById("gifPreview").style.display="none";document.getElementById("downloadBtn").style.display="inline-block";releaseWakeLock();return;}
+const {original,cleanText,bg,gif}=chunks[currentIndex];
+const preview=document.getElementById("preview");
+preview.style.backgroundImage=`url('${bg}')`;
+document.getElementById("textOutput").innerHTML=wrapStylishText(original);
 
-    function suggestBG(text) {
-      if (/credit card|bank/i.test(text)) return "https://source.unsplash.com/1280x720/?creditcard,bank";
-      if (/job|work/i.test(text)) return "https://source.unsplash.com/1280x720/?office,work";
-      if (/family|home/i.test(text)) return "https://source.unsplash.com/1280x720/?family,home";
-      if (/visa|passport/i.test(text)) return "https://source.unsplash.com/1280x720/?airport,passport";
-      return "https://source.unsplash.com/1280x720/?india,people";
-    }
+const gifPreview=document.getElementById("gifPreview");
+if(gif){gifPreview.querySelector("img").src=gif;gifPreview.style.display="block";}else{gifPreview.style.display="none";}
 
-    function suggestGIF(text) {
-      if (/money|cash|dollar|rupee/i.test(text)) return "https://media.giphy.com/media/l0HlQ7LRalxA5kxqA/giphy.gif";
-      if (/family|home/i.test(text)) return "https://media.giphy.com/media/3ohhwf34cGDoFFhRfy/giphy.gif";
-      if (/job|work/i.test(text)) return "https://media.giphy.com/media/26tPoyDhjiJ2g7rEs/giphy.gif";
-      if (/love|heart/i.test(text)) return "https://media.giphy.com/media/3orieYy9C1tGqVfnG8/giphy.gif";
-      return "";
-    }
+if(typeSound){typeSound.pause();typeSound.currentTime=0;typeSound.play().catch(()=>{});}
 
-    function playNext() {
-      if (currentIndex >= chunks.length) {
-        document.getElementById("gifPreview").style.display = "none";
-        document.getElementById("downloadBtn").style.display = "inline-block";
-        releaseWakeLock();
-        return;
-      }
+const utterance=new SpeechSynthesisUtterance(cleanText);
+utterance.lang=lang;utterance.pitch=1;utterance.rate=speed;
+const voices=speechSynthesis.getVoices();const match=voices.find(v=>v.lang===lang);
+if(match) utterance.voice=match;
 
-      const { original, cleanText, bg, gif } = chunks[currentIndex];
-      const preview = document.getElementById("preview");
-      preview.style.backgroundImage = `url('${bg}')`;
-      document.getElementById("textOutput").innerHTML = wrapStylishText(original);
+utterance.onend=()=>{currentIndex++;setTimeout(playNext,200);};
+speechSynthesis.cancel();speechSynthesis.speak(utterance);
+}
 
-      const gifPreview = document.getElementById("gifPreview");
-      if (gif) {
-        gifPreview.querySelector("img").src = gif;
-        gifPreview.style.display = "block";
-      } else {
-        gifPreview.style.display = "none";
-      }
+function wrapStylishText(text){
+const keywords=["FREE","SCAM","DENIED","ARRESTED","$","₹","urgent","now","%"];
+return '<div class="voice-caption-container">'+text.split(/\s+/).map((w,i)=>{let cls="";if(/^[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/u.test(w))cls="emoji";else if(keywords.some(k=>w.toUpperCase().includes(k)))cls="big";return `<span class="voice-caption-word ${cls}" style="animation-delay:${i*0.15}s">${w}</span>`}).join(" ")+'</div>';
+}
 
-      if (typeSound) {
-        typeSound.pause();
-        typeSound.currentTime = 0;
-        typeSound.play().catch(() => {});
-      }
-
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = lang;
-      utterance.pitch = 1;
-      utterance.rate = speed;
-      const voices = speechSynthesis.getVoices();
-      const match = voices.find(v => v.lang === lang);
-      if (match) utterance.voice = match;
-
-      utterance.onend = () => {
-        currentIndex++;
-        setTimeout(playNext, 200);
-      };
-
-      speechSynthesis.cancel();
-      speechSynthesis.speak(utterance);
-    }
-
-    function wrapStylishText(text) {
-      const keywords = ["FREE", "SCAM", "DENIED", "ARRESTED", "$", "₹", "urgent", "now", "%"];
-      return '<div class="voice-caption-container">' +
-        text.split(/\s+/).map((w, i) => {
-          let cls = "";
-          if (/^[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/u.test(w)) cls = "emoji";
-          else if (keywords.some(k => w.toUpperCase().includes(k))) cls = "big";
-          return `<span class="voice-caption-word ${cls}" style="animation-delay:${i * 0.15}s">${w}</span>`;
-        }).join(" ") + '</div>';
-    }
-
-    document.getElementById("downloadBtn").addEventListener("click", () => {
-      alert("Manual recording required. Use screen recorder to capture the preview.");
-    });
-
-    if (typeof speechSynthesis !== 'undefined') {
-      speechSynthesis.onvoiceschanged = () => {};
-    }
-  </script>
+document.getElementById("downloadBtn").addEventListener("click",()=>{alert("Manual recording required. Use screen recorder to capture the preview.");});
+if(typeof speechSynthesis!=='undefined'){speechSynthesis.onvoiceschanged=()=>{};}
+</script>
 </body>
 </html>
