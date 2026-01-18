@@ -1,10 +1,8 @@
-<!DOCTYPE html>
 <html lang="hi">
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>Final Cinematic Wake-Lock Voice Tool</title>
-
   <style>
     body {
       margin: 0;
@@ -19,7 +17,7 @@
       background: #fff;
       padding: 20px;
       border-radius: 16px;
-      box-shadow: 0 0 15px rgba(0,0,0,.1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
     }
 
     textarea {
@@ -37,12 +35,11 @@
       padding: 12px 24px;
       font-size: 16px;
       background: #ff4d4f;
-      color: #fff;
+      color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       margin-right: 10px;
-      margin-top: 5px;
     }
 
     .voice-visual-preview {
@@ -66,12 +63,14 @@
     }
 
     .avatar-container {
+      flex: 0 0 auto;
       width: 160px;
       visibility: hidden;
     }
 
     .avatar-container img {
       width: 100%;
+      height: auto;
     }
 
     .text-container {
@@ -92,13 +91,22 @@
     }
 
     .voice-caption-word {
+      display: inline-block;
       opacity: 0;
-      animation: fadeIn .5s forwards;
+      animation: fadeIn 0.5s forwards;
+      white-space: nowrap;
+      position: relative;
     }
 
     .voice-caption-word.big {
       font-size: 1.5em;
       color: #ffeb3b;
+    }
+
+    .voice-caption-word.emoji {
+      font-size: 2.5em;
+      line-height: 1;
+      vertical-align: middle;
     }
 
     .scroll-caption-strip {
@@ -122,118 +130,200 @@
       animation: scroll-strip 20s linear infinite;
     }
 
+    .gif-preview {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 200px;
+      height: 120px;
+      border-radius: 12px;
+      overflow: hidden;
+      z-index: 4;
+      display: none;
+    }
+
+    .gif-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .download-btn {
+      display: none;
+      margin-top: 20px;
+    }
+
     @keyframes scroll-strip {
-      from { transform: translateX(0); }
-      to { transform: translateX(-100%); }
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
     }
 
     @keyframes fadeIn {
       from { transform: translateY(10px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+
+    @media (max-width: 768px) {
+      .voice-visual-preview {
+        font-size: 4vw;
+      }
+
+      .text-container {
+        padding-left: 0;
+        justify-content: center;
+      }
+    }
   </style>
 </head>
-
 <body>
-
-<div class="voice-visual-tool">
-  <h2>🎙️ Final Cinematic Wake-Lock Voice Tool</h2>
-
-  <textarea id="scriptInput" placeholder="Paste your full script here..."></textarea>
-
-  <select id="voiceLang">
-    <option value="en-US">English</option>
-    <option value="hi-IN">Hindi</option>
-  </select>
-
-  <select id="voiceSpeed">
-    <option value="0.8">Slow</option>
-    <option value="1" selected>Normal</option>
-    <option value="1.2">Fast</option>
-    <option value="1.5">Faster</option>
-  </select>
-
-  <br><br>
-
-  <button onclick="startPlayback()">▶️ Play</button>
-  <button onclick="startRecording()">⬇️ Auto Download Video</button>
-
-  <div class="voice-visual-preview" id="preview">
-    <div class="avatar-container">
-      <img src="https://i.ibb.co/cSMndFgK/1000000918-unscreen.gif">
+  <div class="voice-visual-tool">
+    <h2>🎙️ Final Cinematic Wake-Lock Voice Tool</h2>
+    <textarea id="scriptInput" placeholder="Paste your full script here..."></textarea>
+    <br />
+    <label for="voiceLang">Language:</label>
+    <select id="voiceLang">
+      <option value="en-US">English</option>
+      <option value="hi-IN">Hindi</option>
+    </select>
+    <label for="voiceSpeed">Speed:</label>
+    <select id="voiceSpeed">
+      <option value="0.8">Slow</option>
+      <option selected="" value="1">Normal</option>
+      <option value="1.2">Fast</option>
+      <option value="1.5">Faster</option>
+    </select>
+    <label for="videoLength">Video Length:</label>
+    <select id="videoLength">
+      <option value="short">Short</option>
+      <option value="long" selected>Long</option>
+    </select>
+    <button onclick="startPlayback()">▶️ Play</button>
+    <div class="voice-visual-preview" id="preview">
+      <div class="avatar-container">
+        <img src="https://i.ibb.co/cSMndFgK/1000000918-unscreen.gif" />
+      </div>
+      <div class="text-container" id="textOutput"></div>
+      <div class="scroll-caption-strip"><span id="captionScroll">LIKE • SHARE • SUBSCRIBE</span></div>
+      <div class="gif-preview" id="gifPreview"><img src="" /></div>
     </div>
-    <div class="text-container" id="textOutput"></div>
-    <div class="scroll-caption-strip">
-      <span>LIKE • SHARE • SUBSCRIBE</span>
-    </div>
+    <button class="download-btn" id="downloadBtn">💾 Download Preview GIF</button>
+    <audio id="typeSound" preload="auto" src="https://files.catbox.moe/8yzjgp.mp3"></audio>
+    <audio id="bgMusic" loop="" preload="auto" src="https://files.catbox.moe/f8xqq8.mp3"></audio>
   </div>
+  <script>
+    let chunks = [], currentIndex = 0, speed = 1, lang = 'en-US';
+    let typeSound = null;
 
-  <audio id="typeSound" src="https://files.catbox.moe/8yzjgp.mp3"></audio>
-  <audio id="bgMusic" loop src="https://files.catbox.moe/f8xqq8.mp3"></audio>
-</div>
+    function splitScript(script) {
+      return script.split(/\n+/g).map(l => l.trim()).filter(l => l);
+    }
 
-<script>
-/* ===== ORIGINAL LOGIC (UNCHANGED) ===== */
+    function startPlayback() {
+      const script = document.getElementById("scriptInput").value;
+      speed = parseFloat(document.getElementById("voiceSpeed").value);
+      lang = document.getElementById("voiceLang").value;
+      const lengthOption = document.getElementById("videoLength").value;
 
-let chunks=[],currentIndex=0,speed=1,lang='en-US',wakeLock=null;
-function splitScript(s){return s.split(/\n+/).map(l=>l.trim()).filter(l=>l);}
-function requestWakeLock(){ if('wakeLock'in navigator){navigator.wakeLock.request('screen');}}
+      typeSound = document.getElementById("typeSound");
+      typeSound.load();
 
-function startPlayback(){
-  const script=document.getElementById("scriptInput").value;
-  speed=parseFloat(voiceSpeed.value);
-  lang=voiceLang.value;
+      const bgMusic = document.getElementById("bgMusic");
+      bgMusic.volume = 0.2;
+      bgMusic.play().catch(() => {});
 
-  bgMusic.volume=.2;
-  bgMusic.play().catch(()=>{});
+      chunks = splitScript(script).map(text => ({
+        original: text,
+        bg: suggestBG(text),
+        gif: suggestGIF(text)
+      }));
 
-  chunks=splitScript(script).map(t=>({o:t,s:t}));
-  currentIndex=0;
-  requestWakeLock();
-  playNext();
-}
+      if (lengthOption === "short") {
+        chunks = chunks.slice(0, Math.min(5, chunks.length));
+      }
 
-function playNext(){
-  if(currentIndex>=chunks.length){
-    bgMusic.pause();
-    return;
-  }
+      currentIndex = 0;
+      document.getElementById("downloadBtn").style.display = "none";
+      playNext();
+    }
 
-  textOutput.innerHTML=chunks[currentIndex].o.split(" ").map(
-    (w,i)=>`<span class="voice-caption-word" style="animation-delay:${i*.15}s">${w}</span>`
-  ).join(" ");
+    function suggestBG(text) {
+      if (/credit card|bank/i.test(text)) return "https://source.unsplash.com/1280x720/?creditcard,bank";
+      if (/job|work/i.test(text)) return "https://source.unsplash.com/1280x720/?office,work";
+      if (/family|home/i.test(text)) return "https://source.unsplash.com/1280x720/?family,home";
+      if (/visa|passport/i.test(text)) return "https://source.unsplash.com/1280x720/?airport,passport";
+      return "https://source.unsplash.com/1280x720/?india,people";
+    }
 
-  const u=new SpeechSynthesisUtterance(chunks[currentIndex].s);
-  u.lang=lang;
-  u.rate=speed;
-  u.onend=()=>{currentIndex++;playNext();}
-  speechSynthesis.speak(u);
-}
+    function suggestGIF(text) {
+      if (/money|cash|dollar|rupee/i.test(text)) return "https://media.giphy.com/media/l0HlQ7LRalxA5kxqA/giphy.gif";
+      if (/family|home/i.test(text)) return "https://media.giphy.com/media/3ohhwf34cGDoFFhRfy/giphy.gif";
+      if (/job|work/i.test(text)) return "https://media.giphy.com/media/26tPoyDhjiJ2g7rEs/giphy.gif";
+      if (/love|heart/i.test(text)) return "https://media.giphy.com/media/3orieYy9C1tGqVfnG8/giphy.gif";
+      return "";
+    }
 
-/* ===== D9 : AUTO RECORD + AUTO DOWNLOAD (ADDITION) ===== */
+    function playNext() {
+      if (currentIndex >= chunks.length) {
+        document.getElementById("gifPreview").style.display = "none";
+        document.getElementById("downloadBtn").style.display = "inline-block";
+        return;
+      }
 
-let recorder,recorded=[];
+      const { original, bg, gif } = chunks[currentIndex];
+      const preview = document.getElementById("preview");
+      preview.style.backgroundImage = `url('${bg}')`;
+      document.getElementById("textOutput").innerHTML = wrapStylishText(original);
 
-async function startRecording(){
-  const stream=preview.captureStream(30);
-  recorder=new MediaRecorder(stream,{mimeType:"video/webm"});
-  recorded=[];
-  recorder.ondataavailable=e=>e.data.size&&recorded.push(e.data);
-  recorder.onstop=downloadVideo;
-  recorder.start();
-  startPlayback();
-}
+      const gifPreview = document.getElementById("gifPreview");
+      if (gif) {
+        gifPreview.querySelector("img").src = gif;
+        gifPreview.style.display = "block";
+      } else {
+        gifPreview.style.display = "none";
+      }
 
-function downloadVideo(){
-  const blob=new Blob(recorded,{type:"video/webm"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url;
-  a.download="cinematic-video.webm";
-  a.click();
-  URL.revokeObjectURL(url);
-}
-</script>
+      if (typeSound) {
+        typeSound.pause();
+        typeSound.currentTime = 0;
+        typeSound.play().catch(() => {});
+      }
 
+      const utterance = new SpeechSynthesisUtterance(original);
+      utterance.lang = lang;
+      utterance.pitch = 1;
+      utterance.rate = speed;
+
+      const voices = speechSynthesis.getVoices();
+      const match = voices.find(v => v.lang === lang);
+      if (match) utterance.voice = match;
+
+      utterance.onend = () => {
+        currentIndex++;
+        setTimeout(playNext, 200); // short gap between lines
+      };
+
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utterance);
+    }
+
+    function wrapStylishText(text) {
+      const keywords = ["FREE", "SCAM", "DENIED", "ARRESTED", "$", "₹", "urgent", "now", "%"];
+      return '<div class="voice-caption-container">' +
+        text.split(/\s+/).map((w, i) => {
+          let cls = "";
+          if (/^[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/u.test(w)) cls = "emoji";
+          else if (keywords.some(k => w.toUpperCase().includes(k))) cls = "big";
+          return `<span class="voice-caption-word ${cls}" style="animation-delay:${i * 0.15}s">${w}</span>`;
+        }).join(" ") + '</div>';
+    }
+
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      alert("Manual recording required. Use screen recorder to capture the preview.");
+    });
+
+    if (typeof speechSynthesis !== 'undefined') {
+      speechSynthesis.onvoiceschanged = () => {};
+    }
+  </script>
 </body>
   </html>
