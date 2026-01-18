@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
-<title>Cinematic Voice Tool with GIF Preview</title>
+<title>Cinematic Voice Tool with Dynamic Visuals</title>
 <style>
 body{margin:0;padding:0;font-family:'Segoe UI',sans-serif;background:transparent;}
 .voice-visual-tool{max-width:1280px;margin:auto;background:#fff;padding:20px;border-radius:16px;box-shadow:0 0 20px rgba(0,0,0,0.15);}
@@ -19,17 +19,17 @@ button,select{padding:12px 24px;font-size:16px;background:#ff4d4f;color:white;bo
 @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
 .scroll-caption-strip{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(90deg,#ff4d4f,#ffd700);color:black;font-size:2vw;white-space:nowrap;overflow:hidden;height:2.8em;line-height:2.8em;z-index:3;}
 .scroll-caption-strip span{display:inline-block;padding-left:100%;animation:scroll-strip 20s linear infinite;}
-.gif-preview{position:absolute;top:10px;right:10px;width:200px;height:120px;border-radius:12px;overflow:hidden;z-index:4;display:none;box-shadow:0 0 15px rgba(0,0,0,0.5);}
-.gif-preview img{width:100%;height:100%;object-fit:cover;}
-.download-btn{display:none;margin-top:20px;}
 @keyframes scroll-strip{0%{transform:translateX(0);}100%{transform:translateX(-100%);}}
 @keyframes fadeIn{from{transform:translateY(10px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 @media(max-width:768px){.voice-visual-preview{font-size:4vw;}.text-container{padding-left:0;justify-content:center;}}
+.visual-preview{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;overflow:hidden;}
+.visual-preview img, .visual-preview video{width:100%;height:100%;object-fit:cover;display:none;}
+.download-btn{display:none;margin-top:20px;}
 </style>
 </head>
 <body>
 <div class="voice-visual-tool">
-<h2>🎙️ Cinematic Voice Tool with GIF Preview</h2>
+<h2>🎙️ Cinematic Voice Tool with Dynamic Visuals</h2>
 <textarea id="scriptInput" placeholder="Paste your full script here..."></textarea><br/>
 <label for="voiceLang">Language:</label>
 <select id="voiceLang"><option value="en-US">English</option><option value="hi-IN">Hindi</option></select>
@@ -43,10 +43,13 @@ button,select{padding:12px 24px;font-size:16px;background:#ff4d4f;color:white;bo
   <div class="avatar-container"><img src="https://i.ibb.co/cSMndFgK/1000000918-unscreen.gif"/></div>
   <div class="text-container" id="textOutput"></div>
   <div class="scroll-caption-strip"><span id="captionScroll">LIKE • SHARE • SUBSCRIBE</span></div>
-  <div class="gif-preview" id="gifPreview"><img src=""/></div>
+  <div class="visual-preview" id="visualPreview">
+    <img id="visualImg"/>
+    <video id="visualVideo" autoplay muted loop></video>
+  </div>
 </div>
 
-<button class="download-btn" id="downloadBtn">💾 Download Preview GIF</button>
+<button class="download-btn" id="downloadBtn">💾 Download Preview</button>
 <audio id="typeSound" preload="auto" src="https://files.catbox.moe/8yzjgp.mp3"></audio>
 <audio id="bgMusic" loop preload="auto" src="https://files.catbox.moe/f8xqq8.mp3"></audio>
 </div>
@@ -65,7 +68,11 @@ const lengthOption=document.getElementById("videoLength").value;
 typeSound=document.getElementById("typeSound");typeSound.load();
 const bgMusic=document.getElementById("bgMusic");bgMusic.volume=0.2;bgMusic.play().catch(()=>{});
 
-chunks=splitScript(script).map(text=>({original:text,cleanText:text.replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu,''),bg:suggestBG(text),gif:suggestGIF(text)}));
+chunks=splitScript(script).map(text=>({
+    original:text,
+    cleanText:text.replace(/GIF suggestion:.*/i,'').replace(/[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/gu,''),
+    keyword:text.split(" ").find(w=>w.length>3)?.toLowerCase()||"",
+}));
 
 if(lengthOption==='short'){chunks=chunks.slice(0,Math.min(5,chunks.length));}
 currentIndex=0;
@@ -74,34 +81,36 @@ requestWakeLock();
 playNext();
 }
 
-function suggestBG(text){
-if(/credit card|bank/i.test(text)) return "https://source.unsplash.com/1280x720/?creditcard,bank";
-if(/job|work/i.test(text)) return "https://source.unsplash.com/1280x720/?office,work";
-if(/family|home/i.test(text)) return "https://source.unsplash.com/1280x720/?family,home";
-if(/visa|passport/i.test(text)) return "https://source.unsplash.com/1280x720/?airport,passport";
-return "https://source.unsplash.com/1280x720/?india,people";
-}
-
-function suggestGIF(text){
-if(/money|cash|dollar|rupee/i.test(text)) return "https://media.giphy.com/media/l0HlQ7LRalxA5kxqA/giphy.gif";
-if(/family|home/i.test(text)) return "https://media.giphy.com/media/3ohhwf34cGDoFFhRfy/giphy.gif";
-if(/job|work/i.test(text)) return "https://media.giphy.com/media/26tPoyDhjiJ2g7rEs/giphy.gif";
-if(/love|heart/i.test(text)) return "https://media.giphy.com/media/3orieYy9C1tGqVfnG8/giphy.gif";
-return "";
+function getVisualForKeyword(keyword){
+if(!keyword) return {type:"img",url:"https://source.unsplash.com/1280x720/?nature"};
+// simple Unsplash dynamic search
+return {type:"img",url:`https://source.unsplash.com/1280x720/?${encodeURIComponent(keyword)}`};
+// future: replace with Pexels/Pixabay API for video fetch
 }
 
 function playNext(){
-if(currentIndex>=chunks.length){document.getElementById("gifPreview").style.display="none";document.getElementById("downloadBtn").style.display="inline-block";releaseWakeLock();return;}
-const {original,cleanText,bg,gif}=chunks[currentIndex];
-const preview=document.getElementById("preview");
-preview.style.backgroundImage=`url('${bg}')`;
+if(currentIndex>=chunks.length){
+document.getElementById("visualImg").style.display="none";
+document.getElementById("visualVideo").style.display="none";
+document.getElementById("downloadBtn").style.display="inline-block";
+releaseWakeLock();
+return;
+}
+
+const {original,cleanText,keyword}=chunks[currentIndex];
 document.getElementById("textOutput").innerHTML=wrapStylishText(original);
 
-const gifPreview=document.getElementById("gifPreview");
-if(gif){gifPreview.querySelector("img").src=gif;gifPreview.style.display="block";}else{gifPreview.style.display="none";}
+const visual=getVisualForKeyword(keyword);
+const img=document.getElementById("visualImg");
+const vid=document.getElementById("visualVideo");
+
+if(visual.type==="video"){
+vid.src=visual.url;vid.style.display="block";img.style.display="none";
+}else{
+img.src=visual.url;img.style.display="block";vid.style.display="none";
+}
 
 if(typeSound){typeSound.pause();typeSound.currentTime=0;typeSound.play().catch(()=>{});}
-
 const utterance=new SpeechSynthesisUtterance(cleanText);
 utterance.lang=lang;utterance.pitch=1;utterance.rate=speed;
 const voices=speechSynthesis.getVoices();const match=voices.find(v=>v.lang===lang);
@@ -113,7 +122,11 @@ speechSynthesis.cancel();speechSynthesis.speak(utterance);
 
 function wrapStylishText(text){
 const keywords=["FREE","SCAM","DENIED","ARRESTED","$","₹","urgent","now","%"];
-return '<div class="voice-caption-container">'+text.split(/\s+/).map((w,i)=>{let cls="";if(/^[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/u.test(w))cls="emoji";else if(keywords.some(k=>w.toUpperCase().includes(k)))cls="big";return `<span class="voice-caption-word ${cls}" style="animation-delay:${i*0.15}s">${w}</span>`}).join(" ")+'</div>';
+return '<div class="voice-caption-container">'+text.split(/\s+/).map((w,i)=>{
+let cls="";if(/^[\u{1F300}-\u{1FAFF}\u{1F600}-\u{1F64F}]/u.test(w))cls="emoji";
+else if(keywords.some(k=>w.toUpperCase().includes(k)))cls="big";
+return `<span class="voice-caption-word ${cls}" style="animation-delay:${i*0.15}s">${w}</span>`;
+}).join(" ")+'</div>';
 }
 
 document.getElementById("downloadBtn").addEventListener("click",()=>{alert("Manual recording required. Use screen recorder to capture the preview.");});
